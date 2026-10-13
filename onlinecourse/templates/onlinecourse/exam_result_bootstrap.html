@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    {% load static %}
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <title>{{ course.name }} - Exam Result</title>
+</head>
+<body>
+
+ <nav class="navbar navbar-light bg-light">
+    <div class="container-fluid">
+        <div class="navbar-header">
+              <a class="navbar-brand" href="{% url 'onlinecourse:index' %}">Home</a>
+        </div>
+        <ul class="nav navbar-nav navbar-right">
+            {% if user.is_authenticated %}
+            <li>
+                <a class="btn btn-link" href="#">{{ user.first_name }}({{ user.username }})</a>
+                <a class="btn btn-link" href="{% url 'onlinecourse:logout' %}">Logout</a>
+            </li>
+            {% else %}
+            <li>
+                <form class="form-inline" action="{% url 'onlinecourse:login' %}" method="post">
+                    {% csrf_token %}
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Username" name="username" >
+                        <input type="password" class="form-control" placeholder="Password" name="psw" >
+                        <button class="btn btn-primary" type="submit">Login</button>
+                        <a class="btn btn-link" href="{% url 'onlinecourse:registration' %}">Sign Up</a>
+                    </div>
+                </form>
+            </li>
+            {% endif %}
+        </ul>
+    </div>
+</nav>
+
+<div class="container-fluid mt-4">
+    <h2 class="mb-3">{{ course.name }} - Exam Evaluation</h2>
+    {% if grade >= 80 %}
+    <div class="alert alert-success shadow-sm">
+        <h4 class="alert-heading font-weight-bold">Congratulations! You have passed the exam!</h4>
+        <p class="mb-0">Your final score is <strong>{{ grade }}%</strong> ({{ total_score }} / {{ possible_score }} points). You met the passing requirement of 80%.</p>
+    </div>
+    {% else %}
+    <div class="alert alert-danger shadow-sm">
+        <h4 class="alert-heading font-weight-bold">Exam Result: Not Passed</h4>
+        <p class="mb-0">Your score is <strong>{{ grade }}%</strong> ({{ total_score }} / {{ possible_score }} points). A minimum score of 80% is required to pass.</p>
+    </div>
+    <a class="btn btn-outline-danger mt-2 mb-3" href="{% url 'onlinecourse:course_details' course.id %}">Re-test Exam</a>
+    {% endif %}
+
+    <div class="card-columns-vertical mt-4">
+        <h4 class="mb-3">Detailed Exam Breakdown</h4>
+        {% for question in questions %}
+        <div class="card mt-3 shadow-sm border-secondary">
+            <div class="card-header bg-light">
+                <h5 class="mb-0 font-weight-bold">Question {{ forloop.counter }}: {{ question.question_text }} (Grade: {{ question.grade }} pts)</h5>
+            </div>
+            <div class="card-body">
+                {% for choice in question.choice_set.all %}
+                <div class="form-check my-2 p-2 rounded {% if choice in choices and choice.is_correct %}bg-success text-white font-weight-bold{% elif choice in choices and not choice.is_correct %}bg-danger text-white font-weight-bold{% elif not choice in choices and choice.is_correct %}bg-warning text-dark font-weight-bold{% endif %}">
+                    {% if choice in choices and choice.is_correct %}
+                        <span>&#10004; Correct answer selected: {{ choice.choice_text }}</span>
+                    {% elif choice in choices and not choice.is_correct %}
+                        <span>&#10008; Wrong answer selected: {{ choice.choice_text }}</span>
+                    {% elif not choice in choices and choice.is_correct %}
+                        <span>&#9888; Not selected (Correct answer): {{ choice.choice_text }}</span>
+                    {% else %}
+                        <span>{{ choice.choice_text }}</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+</body>
+</html>
